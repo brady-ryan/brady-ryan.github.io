@@ -1,6 +1,10 @@
 ---
 layout: default
 title: Home
+header_pages:
+  - index.md
+  - research.md
+  - awards.md
 ---
 
 # Hello world
