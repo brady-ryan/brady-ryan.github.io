@@ -1,8 +1,14 @@
-Hello world
+---
+layout: default
+title: Home
+---
 
+# Hello world
+
+[Home](index.md) | [Research](research.md) | [Awards](awards.md)
 
 Test Image:
 
 <p align="center">
-  <img src="images/j2325_rgb.png" alt="Doubly Imaged Quasar" width="200"/>
+  <img src="images/j2325_rgb.png" alt="Doubly Imaged Quasar"/>
 </p>
