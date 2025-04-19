@@ -1765,7 +1765,7 @@ input, select, textarea {
 	}
 
 	header p {
-		background: url('../../images/mauna_kea.jpg') no-repeat center center;
+		color: #b2b2b2;
 		position: relative;
 		margin: 0 0 1.5em 0;
 	}
@@ -2593,7 +2593,7 @@ input, select, textarea {
 		justify-content: space-between;
 		background-color: #1f1815;
 		background-attachment: scroll,								scroll;
-		background-image: url("images/overlay.png"), url("../../images/bg.jpg");
+		background-image: url("../../images/mauna_kea.jpg"), url("../../images/bg.jpg");
 		background-position: top left,							top left;
 		background-repeat: repeat,								no-repeat;
 		background-size: auto,								150%;
