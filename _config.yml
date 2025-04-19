@@ -1,1 +1,12 @@
+title: My GitHub Page
 theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# These add navigation links to the header
+header_pages:
+  - index.md
+  - research.md
+  - awards.md
