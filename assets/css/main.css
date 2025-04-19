@@ -2476,11 +2476,6 @@ input, select, textarea {
 			border-color: #49bf9d;
 			color: #49bf9d !important;
 		}
-		.button.active {
-			background-color: #49bf9d; /* the same green from active state */
-			border-color: #49bf9d;
-			color: white !important;
-		}
 		
 
 		input[type="submit"].icon,
