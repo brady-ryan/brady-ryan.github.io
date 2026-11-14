@@ -64,31 +64,29 @@
                 <!-- two -->
                 <section id="papers">
                     <h2>Publications</h2>
-						<div class="cite-row" id="cite-stats" hidden>
-							<ul class="actions">
-								<li>
-									<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general"
-									class="button active" target="_blank" rel="noopener noreferrer">
-										<strong id="cite-count">-</strong>&nbsp;Citations
-									</a>
-								</li>
-								<li>
-									<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general"
-									class="button active" target="_blank" rel="noopener noreferrer">
-										<strong id="cite-h">-</strong>&nbsp;h-index
-									</a>
-								</li>
-							</ul>
-							<span class="subtext" id="cite-updated"></span>
-						</div>
+						<ul class="actions" id="cite-stats" hidden>
+							<li>
+								<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general"
+								class="button active" target="_blank" rel="noopener noreferrer">
+									<strong id="cite-count">–</strong>&nbsp;Citations
+								</a>
+							</li>
+							<li>
+								<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general"
+								class="button active" target="_blank" rel="noopener noreferrer">
+									<strong id="cite-h">–</strong>&nbsp;h-index
+								</a>
+							</li>
+							<li><span class="subtext" id="cite-updated"></span></li>
+						</ul>
+
 						<script>
 							fetch("citations.json")
 								.then(r => r.json())
 								.then(d => {
 									document.getElementById("cite-count").textContent = d.citations;
 									document.getElementById("cite-h").textContent = d.h_index;
-									document.getElementById("cite-updated").textContent =
-										`Source: SciX · Updated ${d.updated}`;
+									document.getElementById("cite-updated").textContent = `Updated ${d.updated}`;
 									document.getElementById("cite-stats").hidden = false;
 								})
 								.catch(() => {});

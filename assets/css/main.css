@@ -3220,13 +3220,3 @@ input, select, textarea {
 			}
 
 	}
-
-	.cite-row {
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: 0.5em 1.25em;
-		margin: 1.5em 0 0.5em;
-	}
-	.cite-row[hidden] { display: none; }
-	.cite-row .actions { margin: 0; }
