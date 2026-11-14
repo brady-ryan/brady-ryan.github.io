@@ -64,6 +64,34 @@
                 <!-- two -->
                 <section id="papers">
                     <h2>Publications</h2>
+						<ul class="actions" id="cite-stats" hidden>
+							<li>
+								<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general"
+								class="button active" target="_blank" rel="noopener noreferrer">
+									<strong id="cite-count">-</strong>&nbsp;Citations
+								</a>
+							</li>
+							<li>
+								<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general"
+								class="button active" target="_blank" rel="noopener noreferrer">
+									<strong id="cite-h">-</strong>&nbsp;h-index
+								</a>
+							</li>
+						</ul>
+						<p class="subtext" id="cite-updated"></p>
+
+						<script>
+							fetch("citations.json")
+								.then(r => r.json())
+								.then(d => {
+									document.getElementById("cite-count").textContent = d.citations;
+									document.getElementById("cite-h").textContent = d.h_index;
+									document.getElementById("cite-updated").textContent =
+										`Source: SciX · Updated ${d.updated}`;
+									document.getElementById("cite-stats").hidden = false;
+								})
+								.catch(() => {});
+						</script>
                     <div class="table-wrapper"></div>
                      <table>
                         <tbody>
@@ -86,34 +114,6 @@
                         </tbody>
                      </table>
 					<p id="cite-summary" class="subtext"></p>
-					<ul class="actions" id="cite-stats" hidden>
-					<li>
-						<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general"
-						class="button active" target="_blank" rel="noopener noreferrer">
-							<strong id="cite-count">-</strong>&nbsp;Citations
-						</a>
-					</li>
-					<li>
-						<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general"
-						class="button active" target="_blank" rel="noopener noreferrer">
-							<strong id="cite-h">-</strong>&nbsp;h-index
-						</a>
-					</li>
-				</ul>
-				<p class="subtext" id="cite-updated"></p>
-
-				<script>
-					fetch("citations.json")
-						.then(r => r.json())
-						.then(d => {
-							document.getElementById("cite-count").textContent = d.citations;
-							document.getElementById("cite-h").textContent = d.h_index;
-							document.getElementById("cite-updated").textContent =
-								`Source: SciX · Updated ${d.updated}`;
-							document.getElementById("cite-stats").hidden = false;
-						})
-						.catch(() => {});
-				</script>
 					<div style="display: flex; align-items: center; gap: 100px;">
 						<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general" target="_blank" rel="noopener noreferrer">
 							<img src="images/scix_logo.jpeg" alt="SciX" style="width: 120px;" />
