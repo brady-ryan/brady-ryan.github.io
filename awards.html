@@ -85,6 +85,16 @@
                           </tr>
                         </tbody>
                      </table>
+					<p id="cite-summary" class="subtext"></p>
+					<script>
+						fetch("citations.json")
+							.then(r => r.json())
+							.then(d => {
+							document.getElementById("cite-summary").textContent =
+								`${d.papers} papers · ${d.citations} citations · h-index ${d.h_index} (SciX, updated ${d.updated})`;
+							})
+							.catch(() => {});
+					</script>
 					<div style="display: flex; align-items: center; gap: 100px;">
 						<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general" target="_blank" rel="noopener noreferrer">
 							<img src="images/scix_logo.jpeg" alt="SciX" style="width: 120px;" />
