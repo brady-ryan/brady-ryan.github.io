@@ -86,30 +86,34 @@
                         </tbody>
                      </table>
 					<p id="cite-summary" class="subtext"></p>
-					<div class="cite-stats" id="cite-stats" hidden>
-						<div class="cite-box">
-							<span class="cite-number" id="cite-count">-</span>
-							<span class="cite-label">Citations</span>
-						</div>
-						<div class="cite-box">
-							<span class="cite-number" id="cite-h">-</span>
-							<span class="cite-label">h-index</span>
-						</div>
-					</div>
-					<p class="subtext" id="cite-updated" style="margin-top: 0.5em;"></p>
+					<ul class="actions" id="cite-stats" hidden>
+					<li>
+						<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general"
+						class="button active" target="_blank" rel="noopener noreferrer">
+							<strong id="cite-count">-</strong>&nbsp;Citations
+						</a>
+					</li>
+					<li>
+						<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general"
+						class="button active" target="_blank" rel="noopener noreferrer">
+							<strong id="cite-h">-</strong>&nbsp;h-index
+						</a>
+					</li>
+				</ul>
+				<p class="subtext" id="cite-updated"></p>
 
-					<script>
-						fetch("citations.json")
-							.then(r => r.json())
-							.then(d => {
-								document.getElementById("cite-count").textContent = d.citations;
-								document.getElementById("cite-h").textContent = d.h_index;
-								document.getElementById("cite-updated").textContent =
-									`Source: SciX · Updated ${d.updated}`;
-								document.getElementById("cite-stats").hidden = false;
-							})
-							.catch(() => {});
-					</script>
+				<script>
+					fetch("citations.json")
+						.then(r => r.json())
+						.then(d => {
+							document.getElementById("cite-count").textContent = d.citations;
+							document.getElementById("cite-h").textContent = d.h_index;
+							document.getElementById("cite-updated").textContent =
+								`Source: SciX · Updated ${d.updated}`;
+							document.getElementById("cite-stats").hidden = false;
+						})
+						.catch(() => {});
+				</script>
 					<div style="display: flex; align-items: center; gap: 100px;">
 						<a href="https://scixplorer.org/search?p=1&q=orcid%3A0009-0003-1338-6336&sort=date+desc&d=general" target="_blank" rel="noopener noreferrer">
 							<img src="images/scix_logo.jpeg" alt="SciX" style="width: 120px;" />
