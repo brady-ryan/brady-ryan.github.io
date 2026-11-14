@@ -86,12 +86,27 @@
                         </tbody>
                      </table>
 					<p id="cite-summary" class="subtext"></p>
+					<div class="cite-stats" id="cite-stats" hidden>
+						<div class="cite-box">
+							<span class="cite-number" id="cite-count">-</span>
+							<span class="cite-label">Citations</span>
+						</div>
+						<div class="cite-box">
+							<span class="cite-number" id="cite-h">-</span>
+							<span class="cite-label">h-index</span>
+						</div>
+					</div>
+					<p class="subtext" id="cite-updated" style="margin-top: 0.5em;"></p>
+
 					<script>
 						fetch("citations.json")
 							.then(r => r.json())
 							.then(d => {
-							document.getElementById("cite-summary").textContent =
-								`${d.papers} papers · ${d.citations} citations · h-index ${d.h_index} (SciX, updated ${d.updated})`;
+								document.getElementById("cite-count").textContent = d.citations;
+								document.getElementById("cite-h").textContent = d.h_index;
+								document.getElementById("cite-updated").textContent =
+									`Source: SciX · Updated ${d.updated}`;
+								document.getElementById("cite-stats").hidden = false;
 							})
 							.catch(() => {});
 					</script>
