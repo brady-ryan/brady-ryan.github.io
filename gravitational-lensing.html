@@ -136,7 +136,7 @@
 <div class="wrap">
   <header>
     <h1>Lensed Quasars and the Expansion of the Universe</h1>
-    <p>A galaxy in the foreground splits a distant quasar into several images. Light takes a different path to each one, so a flicker in the quasar reaches us at different times. Measure those delays and you can weigh the universe’s expansion rate.</p>
+    <p>A galaxy in the foreground splits a distant quasar into several images. Light from each image takes a distinct path as it travels towards Earth, so a fluctuation in the quasar reaches us at different times. Measure those delays and you can compute the universe's expansion rate!</p>
   </header>
 
   <div class="lab">
@@ -268,7 +268,7 @@
 
   <section class="card h0" aria-labelledby="h0Title">
     <h2 id="h0Title">From time delays to the Hubble constant</h2>
-    <p>Each delay is the product of two things: a geometric factor the lens model predicts, and the time-delay distance, which scales as 1/H<sub>0</sub>. Measure the delay, model the lens, and H<sub>0</sub> follows directly, without the cosmic distance ladder or the cosmic microwave background.</p>
+    <p>Each delay is the product of two components. The first is a geometric factor governed by the deflector's gravitational potential. The second, known as the time-delay distance, is determined by the geometry of all bodies in the system and scales as 1/H<sub>0</sub>. Measure the delay, model the lens, and H<sub>0</sub> follows directly, without the cosmic distance ladder or the cosmic microwave background.</p>
     <div class="h0grid">
       <div>
         <div class="row">
@@ -292,7 +292,7 @@
         <p class="result serif" id="h0Result"></p>
         <p id="h0Text"></p>
         <svg id="h0Chart" viewBox="0 0 640 132" role="img" aria-label="Inferred Hubble constant compared with Planck and SH0ES"></svg>
-        <p class="fine">Shaded bands: Planck 2018 cosmic microwave background (67.4 ± 0.5) and SH0ES 2022 Cepheids plus supernovae (73.0 ± 1.0), in km/s/Mpc. The dashed line is the true value in this simulation. For comparison, H0LiCOW’s six lensed quasars gave 73.3 (+1.7/−1.8), and TDCOSMO’s 2020 reanalysis, with looser assumptions about the lens mass profile, gave 74.5 (+5.6/−6.1).</p>
+        <p class="fine">Shaded bands: Planck 2018 cosmic microwave background (67.4 ± 0.5) and SH0ES 2022 Cepheids plus supernovae (73.0 ± 1.0), in km/s/Mpc. The dashed line is the true value in this simulation.</p>
       </div>
     </div>
   </section>
@@ -300,16 +300,9 @@
   <section class="notes">
     <div>
       <h2>Why quasars</h2>
-      <p>A quasar is a point of light that flickers on timescales of days to months. That makes it ideal for timing: each image is sharp enough to measure separately, and the same flicker pattern can be matched between them.</p>
+      <p>A quasar is an extremely distant active galactic nucleus, whose brightness fluctuates on timescales of days to months. That makes it ideal for timing, as each image is sharp enough to measure separately, and the same oscillation pattern can be matched between them.</p>
     </div>
-    <div>
-      <h2>Who arrives first</h2>
-      <p>Images sit at stationary points of the light-travel time. Minima arrive first, saddle points next (these images are mirror-flipped), and maxima last. A maximum would sit near the galaxy’s dense center, where it is so faint it’s almost never seen.</p>
-    </div>
-    <div>
-      <h2>The mass-sheet degeneracy</h2>
-      <p>Adding a uniform sheet of mass, such as galaxies along the line of sight, leaves image positions and flux ratios unchanged but rescales every delay. Without an independent handle on that mass, H<sub>0</sub> comes out biased by a factor of 1/(1 − κ<sub>ext</sub>).</p>
-    </div>
+    <div>å
     <div>
       <h2>Reading the overlays</h2>
       <p>The gold critical curve marks infinite magnification; images merge or split as they cross it. In the magnification map, <span class="swatch" style="background:#4a9dff"></span> blue areas keep the source’s orientation and <span class="swatch" style="background:#ff7a4d"></span> orange areas mirror it.</p>
