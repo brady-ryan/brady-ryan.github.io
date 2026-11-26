@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<!--
+  Gravitational lensing explorer
+  Single self-contained file: no external assets or libraries. Requires WebGL2.
+  Embed with: <iframe src="gravitational-lensing.html" style="width:100%;height:900px;border:0" title="Gravitational lensing explorer"></iframe>
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gravitational lensing explorer</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #eef1f6;
+    --panel: #ffffff;
+    --ink: #1b2233;
+    --muted: #5a6478;
+    --line: #d5dbe6;
+    --accent: #8a5a00;
+    --accent-soft: #f6e8cb;
+    --focus: #2a5bd7;
+    --space: #03040a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0f1424;
+      --panel: #171e33;
+      --ink: #e6e9f2;
+      --muted: #9aa3b8;
+      --line: #2a3350;
+      --accent: #e8b450;
+      --accent-soft: #3a2f17;
+      --focus: #8fb2ff;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0f1424; --panel: #171e33; --ink: #e6e9f2; --muted: #9aa3b8;
+    --line: #2a3350; --accent: #e8b450; --accent-soft: #3a2f17; --focus: #8fb2ff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(24px, env(safe-area-inset-bottom, 0px));
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header { max-width: 62ch; margin: 8px 0 20px; }
+  h1 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(28px, 4.2vw, 44px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+  }
+  header p { margin: 0; color: var(--muted); font-size: 16px; }
+
+  .lab {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 860px) { .lab { grid-template-columns: 1fr; } }
+
+  .stage {
+    position: relative;
+    width: 100%;
+    max-width: min(100%, 82vh);
+    margin: 0 auto;
+    aspect-ratio: 1 / 1;
+    background: var(--space);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  #sky {
+    display: block; width: 100%; height: 100%;
+    touch-action: none; cursor: crosshair;
+  }
+  #sky:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+  .hint {
+    position: absolute; left: 12px; bottom: 10px; right: 12px;
+    color: rgba(230, 236, 255, 0.72);
+    font-size: 13px;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+  .fallback {
+    position: absolute; inset: 0; display: none;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 24px; color: #dfe5f5;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 4px 16px 16px;
+  }
+  fieldset { border: 0; margin: 0; padding: 14px 0 4px; border-top: 1px solid var(--line); }
+  fieldset:first-child { border-top: 0; }
+  legend {
+    padding: 14px 0 6px; float: left; width: 100%;
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 17px; font-weight: 600;
+  }
+  legend + * { clear: both; }
+
+  .row { margin: 8px 0 12px; }
+  .row label, .row .lbl { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+  .row output { color: var(--muted); font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; margin: 6px 0 0; accent-color: var(--accent); }
+  select {
+    width: 100%; margin-top: 6px; padding: 7px 8px; font: inherit;
+    color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 4px;
+  }
+
+  .seg { display: flex; margin-top: 6px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg label {
+    flex: 1; text-align: center; padding: 7px 4px; font-size: 13px; cursor: pointer;
+    border-left: 1px solid var(--line); display: block;
+  }
+  .seg label:first-of-type { border-left: 0; }
+  .seg input:checked + label { background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+  .seg input:focus-visible + label { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+  .checks label { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; cursor: pointer; }
+  .checks input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  button {
+    font: inherit; font-size: 13px; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 4px;
+    padding: 7px 10px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 14px; }
+  .actions .wide { grid-column: 1 / -1; }
+  .status { font-size: 13px; color: var(--muted); margin: 6px 0 0; min-height: 1.2em; }
+
+  .below { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; margin-top: 14px; }
+  @media (max-width: 860px) { .below { grid-template-columns: 1fr; } }
+  .readout { color: var(--muted); font-size: 14px; margin: 0; font-variant-numeric: tabular-nums; }
+
+  .notes {
+    margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line);
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 28px;
+  }
+  .notes h2 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 18px; font-weight: 600; margin: 0 0 4px;
+  }
+  .notes p { margin: 0 0 12px; color: var(--muted); max-width: 60ch; }
+  .swatch { display: inline-block; width: 0.8em; height: 0.8em; border-radius: 2px; vertical-align: -0.05em; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Gravitational lensing</h1>
+    <p>Mass bends the path of light. Drag a lens across a distant galaxy and watch its image stretch into arcs, split into copies, and close into an Einstein ring.</p>
+  </header>
+
+  <div class="lab">
+    <div>
+      <div class="stage">
+        <canvas id="sky" tabindex="0" aria-label="Lensed sky. Drag, or use arrow keys, to move the selected object."></canvas>
+        <div class="hint" id="hint">Drag to move the lens</div>
+        <div class="fallback" id="fallback">This visualization needs WebGL2, which this browser has turned off or doesn’t support.</div>
+      </div>
+      <div class="below">
+        <p class="readout" id="readout"></p>
+      </div>
+    </div>
+
+    <aside class="panel" aria-label="Controls">
+      <fieldset>
+        <legend>Try a setup</legend>
+        <div class="presets">
+          <button type="button" data-preset="ring">Einstein ring</button>
+          <button type="button" data-preset="cross">Einstein cross</button>
+          <button type="button" data-preset="arc">Giant arc</button>
+          <button type="button" data-preset="binary">Binary lens</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Lens</legend>
+        <div class="row">
+          <span class="lbl">Mass profile</span>
+          <div class="seg" role="radiogroup" aria-label="Mass profile">
+            <input type="radio" name="model" id="m0" value="0"><label for="m0">Point mass</label>
+            <input type="radio" name="model" id="m1" value="1"><label for="m1">Galaxy</label>
+            <input type="radio" name="model" id="m2" value="2"><label for="m2">Binary</label>
+          </div>
+        </div>
+        <div class="row">
+          <label for="te">Einstein radius <output id="teOut"></output></label>
+          <input type="range" id="te" min="0.1" max="1.5" step="0.01">
+        </div>
+        <div class="row" data-only="binary">
+          <label for="sep">Separation <output id="sepOut"></output></label>
+          <input type="range" id="sep" min="0.1" max="2" step="0.01">
+        </div>
+        <div class="row" data-only="binary">
+          <label for="q">Mass ratio <output id="qOut"></output></label>
+          <input type="range" id="q" min="0.05" max="1" step="0.01">
+        </div>
+        <div class="row" data-only="binary">
+          <label for="binAng">Orientation <output id="binAngOut"></output></label>
+          <input type="range" id="binAng" min="0" max="180" step="1">
+        </div>
+        <div class="row">
+          <label for="shear">External shear <output id="shearOut"></output></label>
+          <input type="range" id="shear" min="0" max="0.3" step="0.005">
+        </div>
+        <div class="row">
+          <label for="shearAng">Shear direction <output id="shearAngOut"></output></label>
+          <input type="range" id="shearAng" min="0" max="180" step="1">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Background</legend>
+        <div class="row">
+          <label for="source">Light source</label>
+          <select id="source">
+            <option value="0">Spiral galaxy</option>
+            <option value="1">Star field</option>
+            <option value="2">Coordinate grid</option>
+            <option value="3" id="optImage" disabled>Your image</option>
+          </select>
+        </div>
+        <div class="row" data-src="0 2">
+          <label for="srcSize">Source size <output id="srcSizeOut"></output></label>
+          <input type="range" id="srcSize" min="0.03" max="0.6" step="0.01">
+        </div>
+        <button type="button" id="uploadBtn">Use your own image…</button>
+        <input type="file" id="file" accept="image/*" class="hidden">
+        <p class="status" id="status" role="status"></p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Interaction</legend>
+        <div class="row">
+          <span class="lbl">Dragging moves</span>
+          <div class="seg" role="radiogroup" aria-label="Dragging moves">
+            <input type="radio" name="drag" id="dLens" value="lens"><label for="dLens">The lens</label>
+            <input type="radio" name="drag" id="dSrc" value="src"><label for="dSrc">The source</label>
+          </div>
+        </div>
+        <div class="checks">
+          <label><input type="checkbox" id="crit"> Critical curves</label>
+          <label><input type="checkbox" id="mag"> Magnification map</label>
+          <label><input type="checkbox" id="marker"> Lens and source markers</label>
+        </div>
+        <div class="actions">
+          <button type="button" id="compare" class="wide">Hold to see without lensing</button>
+          <button type="button" id="animate" aria-pressed="false">Drift source</button>
+          <button type="button" id="reset">Reset</button>
+        </div>
+      </fieldset>
+    </aside>
+  </div>
+
+  <section class="notes">
+    <div>
+      <h2>What you’re looking at</h2>
+      <p>A massive object sits between you and a background light source. Its gravity deflects passing light, so the source appears displaced, distorted and sometimes copied. Surface brightness is preserved, so stretched images also look larger and brighter overall.</p>
+    </div>
+    <div>
+      <h2>Critical curves</h2>
+      <p>The gold line marks where magnification becomes formally infinite. When a source’s image touches it, two images merge or split apart. For a single, perfectly aligned lens it is the Einstein ring itself.</p>
+    </div>
+    <div>
+      <h2>Magnification map</h2>
+      <p><span class="swatch" style="background:#4a9dff"></span> Blue regions show images with the source’s own orientation; <span class="swatch" style="background:#ff7a4d"></span> orange regions show mirror-flipped images. Brighter tint means stronger magnification.</p>
+    </div>
+  </section>
+</div>
+
+<script id="vs" type="x-shader/x-vertex">#version 300 es
+in vec2 aPos;
+void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+</script>
+
+<script id="fs" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+out vec4 outColor;
+
+uniform vec2 uRes;
+uniform float uScale;
+uniform vec2 uLens;
+uniform float uTE;
+uniform int uModel;
+uniform vec2 uShear;
+uniform float uSep, uQ, uBinAng;
+uniform vec2 uSrc;
+uniform float uSrcSize;
+uniform int uSource;
+uniform sampler2D uTex;
+uniform float uTexAspect;
+uniform int uCrit, uMag, uMarker, uUnlensed;
+
+const vec3 GOLD = vec3(1.0, 0.78, 0.32);
+
+float h21(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+vec2 h22(vec2 p) { float n = h21(p); return vec2(n, h21(p + n)); }
+float vn(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x),
+             mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y);
+}
+
+vec2 binDir() { return vec2(cos(uBinAng), sin(uBinAng)); }
+vec2 lensP1() { return uLens - (uQ / (1.0 + uQ)) * uSep * binDir(); }
+vec2 lensP2() { return uLens + (1.0 / (1.0 + uQ)) * uSep * binDir(); }
+
+// Deflection angle for the chosen mass model plus external shear
+vec2 deflect(vec2 t) {
+  vec2 d = t - uLens;
+  vec2 a;
+  if (uModel == 0) {
+    a = uTE * uTE * d / (dot(d, d) + 1e-7);
+  } else if (uModel == 1) {
+    a = uTE * d / (length(d) + 1e-7);
+  } else {
+    float m1 = 1.0 / (1.0 + uQ), m2 = uQ / (1.0 + uQ);
+    vec2 d1 = t - lensP1(), d2 = t - lensP2();
+    a = uTE * uTE * (m1 * d1 / (dot(d1, d1) + 1e-7) + m2 * d2 / (dot(d2, d2) + 1e-7));
+  }
+  a += vec2(uShear.x * d.x + uShear.y * d.y, uShear.y * d.x - uShear.x * d.y);
+  return a;
+}
+vec2 lensEq(vec2 t) { return uUnlensed == 1 ? t : t - deflect(t); }
+
+vec3 srcStars(vec2 b, float k, float px, float density) {
+  vec2 c = floor(b * k);
+  vec3 acc = vec3(0.0);
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 cell = c + vec2(float(i), float(j));
+      if (h21(cell) > density) continue;
+      vec2 sp = (cell + 0.1 + 0.8 * h22(cell * 1.7 + 3.1)) / k;
+      float sz = 0.0035 + 0.006 * pow(h21(cell + 9.3), 6.0);
+      float s2 = sz * sz + px * px;
+      vec2 dd = b - sp;
+      float I = (sz * sz / s2) * exp(-dot(dd, dd) / s2);
+      vec3 tint = mix(vec3(1.0, 0.78, 0.6), vec3(0.7, 0.82, 1.0), h21(cell + 4.4));
+      acc += tint * I * (0.6 + 1.4 * h21(cell + 2.2));
+    }
+  }
+  return acc;
+}
+
+vec3 srcGalaxy(vec2 b) {
+  vec2 q = (b - uSrc) / uSrcSize;
+  float c = cos(0.6), s = sin(0.6);
+  q = vec2(c * q.x - s * q.y, s * q.x + c * q.y);
+  q.y /= 0.72;
+  float r = length(q);
+  float ph = atan(q.y, q.x);
+  float spiral = pow(0.5 + 0.5 * cos(2.0 * ph - 5.0 * log(r + 0.02)), 2.5);
+  float n = vn(q * 5.0) * 0.6 + vn(q * 11.0) * 0.4;
+  float disk = exp(-r * 3.0);
+  float bulge = exp(-r * r * 40.0);
+  vec3 col = vec3(0.45, 0.62, 1.0) * disk * (0.15 + 1.4 * spiral * (0.6 + 0.8 * n));
+  col += vec3(1.0, 0.82, 0.55) * (bulge * 2.2 + exp(-r * 6.0) * 0.35);
+  col += vec3(1.0, 0.45, 0.7) * smoothstep(0.72, 0.95, n) * spiral * disk * 2.0;
+  return col * 1.6;
+}
+
+vec3 srcStarfield(vec2 b, float px) {
+  vec3 col = vec3(0.02, 0.025, 0.05);
+  col += vn(b * 1.3 + 7.0) * vec3(0.07, 0.03, 0.09) + vn(b * 2.7) * vec3(0.0, 0.04, 0.07);
+  col += srcStars(b, 12.0, px, 0.35) * 1.5;
+  col += srcStars(b + 3.7, 30.0, px, 0.25) * 0.7;
+  return col;
+}
+
+vec3 srcGrid(vec2 b) {
+  vec2 q = (b - uSrc) * 2.5;
+  vec2 w = max(fwidth(q), vec2(1e-4));
+  vec2 g = abs(fract(q - 0.5) - 0.5) / w;
+  float line = 1.0 - min(min(g.x, g.y), 1.0);
+  line *= 1.0 / (1.0 + 0.5 * max(w.x, w.y));
+  float checker = mod(floor(q.x) + floor(q.y), 2.0);
+  vec3 base = mix(vec3(0.05, 0.07, 0.15), vec3(0.08, 0.11, 0.22), checker);
+  vec3 col = mix(base, vec3(0.55, 0.7, 1.0), line);
+  float disc = 1.0 - smoothstep(uSrcSize * 0.92, uSrcSize, length(b - uSrc));
+  col = mix(col, vec3(1.3, 0.6, 0.3), disc * 0.9);
+  return col;
+}
+
+void main() {
+  float hw = 0.5 * min(uRes.x, uRes.y);
+  vec2 t = (gl_FragCoord.xy - 0.5 * uRes) / hw * uScale;
+  float e = uScale / hw;  // image-plane size of one pixel
+
+  vec2 b = lensEq(t);
+  vec2 bx = lensEq(t + vec2(e, 0.0));
+  vec2 by = lensEq(t + vec2(0.0, e));
+  float det = ((bx.x - b.x) * (by.y - b.y) - (by.x - b.x) * (bx.y - b.y)) / (e * e);
+  float px = length(fwidth(b)) * 0.7;
+
+  // Image source, sampled in uniform control flow
+  vec2 iq = (b - uSrc) / (2.0 * uScale);
+  vec2 uv = uTexAspect >= 1.0 ? vec2(iq.x / uTexAspect, iq.y) : vec2(iq.x, iq.y * uTexAspect);
+  uv += 0.5;
+  vec3 texc = texture(uTex, uv).rgb;
+  float inside = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
+
+  vec3 col;
+  if (uSource == 0) {
+    col = vec3(0.012, 0.016, 0.035) + srcGalaxy(b) + srcStars(b, 14.0, px, 0.22) * 0.8;
+  } else if (uSource == 1) {
+    col = srcStarfield(b, px);
+  } else if (uSource == 2) {
+    col = srcGrid(b);
+  } else {
+    col = texc * inside;
+  }
+  if (uSource != 3) col = 1.0 - exp(-col * 1.3);
+
+  if (uMag == 1 && uUnlensed == 0) {
+    float m = clamp(log(1.0 / max(abs(det), 1e-4)) / log(10.0) / 1.5, 0.0, 1.0);
+    vec3 tint = det > 0.0 ? vec3(0.29, 0.62, 1.0) : vec3(1.0, 0.48, 0.3);
+    col = col * 0.6 + tint * (0.1 + 0.75 * m);
+  }
+
+  if (uCrit == 1 && uUnlensed == 0) {
+    float fw = max(fwidth(det), 1e-6);
+    float c = 1.0 - smoothstep(0.0, 1.5, abs(det) / fw);
+    c *= step(fw, 2.0);  // suppress noise right at the singularity
+    col = mix(col, GOLD, c * 0.9);
+  }
+
+  if (uMarker == 1) {
+    vec2 pts[2];
+    int n = 1;
+    if (uModel == 2) { pts[0] = lensP1(); pts[1] = lensP2(); n = 2; }
+    else { pts[0] = uLens; pts[1] = uLens; }
+    for (int i = 0; i < 2; i++) {
+      if (i >= n) break;
+      float d = length(t - pts[i]) / e;
+      float ring = 1.0 - smoothstep(0.0, 1.3, abs(d - 7.0));
+      float dot_ = 1.0 - smoothstep(1.2, 2.4, d);
+      col = mix(col, GOLD, max(ring, dot_) * 0.95);
+    }
+    vec2 sd = abs(t - uSrc) / e;
+    float cross_ = (sd.x < 1.0 && sd.y < 7.0) || (sd.y < 1.0 && sd.x < 7.0) ? 1.0 : 0.0;
+    float gap = step(2.5, max(sd.x, sd.y));
+    col = mix(col, vec3(0.6, 0.95, 1.0), cross_ * gap * 0.9);
+  }
+
+  outColor = vec4(col, 1.0);
+}
+</script>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const canvas = $("#sky");
+  const SCALE = 2.0;
+
+  const DEFAULTS = {
+    model: 1, te: 0.9, shear: 0.0, shearAng: 30, sep: 0.9, q: 0.6, binAng: 20,
+    lens: [0, 0], src: [0.45, 0.2], srcSize: 0.18, source: 0,
+    crit: true, mag: false, marker: true, drag: "lens"
+  };
+  const PRESETS = {
+    ring:   { model: 1, te: 0.9, shear: 0, lens: [0, 0], src: [0, 0], srcSize: 0.18, source: 0 },
+    cross:  { model: 1, te: 0.9, shear: 0.12, shearAng: 0, lens: [0, 0], src: [0.05, 0.04], srcSize: 0.1, source: 0 },
+    arc:    { model: 1, te: 1.0, shear: 0.06, shearAng: 90, lens: [0, 0], src: [0.22, 0.12], srcSize: 0.2, source: 0 },
+    binary: { model: 2, te: 0.8, shear: 0, sep: 0.9, q: 0.6, binAng: 20, lens: [0, 0], src: [0.08, 0.04], srcSize: 0.07, source: 0 }
+  };
+
+  const state = Object.assign({ unlensed: false, animate: false, hasImage: false, texAspect: 1 },
+    structuredClone(DEFAULTS));
+
+  const gl = canvas.getContext("webgl2", { antialias: false });
+  if (!gl) { $("#fallback").style.display = "flex"; $("#hint").style.display = "none"; return; }
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src.trim());
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  const prog = gl.createProgram();
+  try {
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, $("#vs").textContent));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, $("#fs").textContent));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  } catch (err) {
+    console.error(err);
+    $("#fallback").textContent = "The lensing shader failed to compile on this device.";
+    $("#fallback").style.display = "flex";
+    return;
+  }
+  gl.useProgram(prog);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, "aPos");
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  const U = {};
+  ["uRes", "uScale", "uLens", "uTE", "uModel", "uShear", "uSep", "uQ", "uBinAng", "uSrc", "uSrcSize",
+   "uSource", "uTex", "uTexAspect", "uCrit", "uMag", "uMarker", "uUnlensed"]
+    .forEach((n) => (U[n] = gl.getUniformLocation(prog, n)));
+
+  const tex = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  function draw() {
+    const rad = Math.PI / 180;
+    gl.uniform2f(U.uRes, canvas.width, canvas.height);
+    gl.uniform1f(U.uScale, SCALE);
+    gl.uniform2f(U.uLens, state.lens[0], state.lens[1]);
+    gl.uniform1f(U.uTE, state.te);
+    gl.uniform1i(U.uModel, state.model);
+    const a2 = 2 * state.shearAng * rad;
+    gl.uniform2f(U.uShear, state.shear * Math.cos(a2), state.shear * Math.sin(a2));
+    gl.uniform1f(U.uSep, state.sep);
+    gl.uniform1f(U.uQ, state.q);
+    gl.uniform1f(U.uBinAng, state.binAng * rad);
+    gl.uniform2f(U.uSrc, state.src[0], state.src[1]);
+    gl.uniform1f(U.uSrcSize, state.srcSize);
+    gl.uniform1i(U.uSource, state.source);
+    gl.uniform1i(U.uTex, 0);
+    gl.uniform1f(U.uTexAspect, state.texAspect);
+    gl.uniform1i(U.uCrit, state.crit ? 1 : 0);
+    gl.uniform1i(U.uMag, state.mag ? 1 : 0);
+    gl.uniform1i(U.uMarker, state.marker ? 1 : 0);
+    gl.uniform1i(U.uUnlensed, state.unlensed ? 1 : 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  let raf = 0, lastT = 0, phase = 0;
+  function requestDraw() { if (!raf) raf = requestAnimationFrame(frame); }
+  function frame(now) {
+    raf = 0;
+    if (state.animate) {
+      const dt = lastT ? Math.min((now - lastT) / 1000, 0.1) : 0;
+      lastT = now;
+      phase += dt;
+      state.src = [state.lens[0] + 0.7 * Math.sin(phase * 0.35), state.lens[1] + 0.28 * Math.sin(phase * 0.23 + 0.6)];
+      updateReadout();
+      requestDraw();
+    } else {
+      lastT = 0;
+    }
+    draw();
+  }
+
+  function resize() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w; canvas.height = h;
+      gl.viewport(0, 0, w, h);
+    }
+    requestDraw();
+  }
+  new ResizeObserver(resize).observe(canvas);
+
+  // ---------- Pointer and keyboard ----------
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  function toTheta(e) {
+    const r = canvas.getBoundingClientRect();
+    const hw = Math.min(r.width, r.height) / 2;
+    return [
+      clamp(((e.clientX - r.left - r.width / 2) / hw) * SCALE, -SCALE, SCALE),
+      clamp((-(e.clientY - r.top - r.height / 2) / hw) * SCALE, -SCALE, SCALE)
+    ];
+  }
+  function moveTarget(p) {
+    if (state.drag === "lens") {
+      if (state.animate) {
+        const dx = p[0] - state.lens[0], dy = p[1] - state.lens[1];
+        state.src = [state.src[0] + dx, state.src[1] + dy];
+      }
+      state.lens = p;
+    } else {
+      setAnimate(false);
+      state.src = p;
+    }
+    updateReadout();
+    requestDraw();
+  }
+  let dragging = false;
+  canvas.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    canvas.setPointerCapture(e.pointerId);
+    moveTarget(toTheta(e));
+  });
+  canvas.addEventListener("pointermove", (e) => { if (dragging) moveTarget(toTheta(e)); });
+  const endDrag = () => { dragging = false; };
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+
+  canvas.addEventListener("keydown", (e) => {
+    const step = e.shiftKey ? 0.2 : 0.04;
+    const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    const cur = state.drag === "lens" ? state.lens : state.src;
+    moveTarget([clamp(cur[0] + d[0], -SCALE, SCALE), clamp(cur[1] + d[1], -SCALE, SCALE)]);
+  });
+
+  // ---------- Controls ----------
+  const ranges = {
+    te:       (v) => v.toFixed(2),
+    sep:      (v) => v.toFixed(2),
+    q:        (v) => v.toFixed(2),
+    binAng:   (v) => Math.round(v) + "°",
+    shear:    (v) => v.toFixed(3),
+    shearAng: (v) => Math.round(v) + "°",
+    srcSize:  (v) => v.toFixed(2)
+  };
+  Object.keys(ranges).forEach((k) => {
+    $("#" + k).addEventListener("input", (e) => {
+      state[k] = parseFloat(e.target.value);
+      $("#" + k + "Out").textContent = ranges[k](state[k]);
+      updateReadout();
+      requestDraw();
+    });
+  });
+  document.querySelectorAll('input[name="model"]').forEach((r) =>
+    r.addEventListener("change", () => { state.model = +r.value; syncVisibility(); updateReadout(); requestDraw(); }));
+  document.querySelectorAll('input[name="drag"]').forEach((r) =>
+    r.addEventListener("change", () => { state.drag = r.value; updateHint(); }));
+  $("#source").addEventListener("change", (e) => { state.source = +e.target.value; syncVisibility(); requestDraw(); });
+  ["crit", "mag", "marker"].forEach((k) =>
+    $("#" + k).addEventListener("change", (e) => { state[k] = e.target.checked; requestDraw(); }));
+
+  const compare = $("#compare");
+  const setUnlensed = (v) => { state.unlensed = v; requestDraw(); };
+  compare.addEventListener("pointerdown", () => setUnlensed(true));
+  ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => compare.addEventListener(ev, () => setUnlensed(false)));
+  compare.addEventListener("keydown", (e) => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); setUnlensed(true); } });
+  compare.addEventListener("keyup", (e) => { if (e.key === " " || e.key === "Enter") setUnlensed(false); });
+  compare.addEventListener("blur", () => setUnlensed(false));
+
+  function setAnimate(on) {
+    state.animate = on;
+    $("#animate").setAttribute("aria-pressed", String(on));
+    $("#animate").textContent = on ? "Stop drifting" : "Drift source";
+    if (on) { phase = Math.asin(clamp((state.src[0] - state.lens[0]) / 0.7, -1, 1)) / 0.35; lastT = 0; }
+    requestDraw();
+  }
+  $("#animate").addEventListener("click", () => setAnimate(!state.animate));
+
+  $("#reset").addEventListener("click", () => {
+    setAnimate(false);
+    Object.assign(state, structuredClone(DEFAULTS));
+    syncControls();
+  });
+  document.querySelectorAll("[data-preset]").forEach((b) =>
+    b.addEventListener("click", () => {
+      setAnimate(false);
+      Object.assign(state, structuredClone(PRESETS[b.dataset.preset]));
+      syncControls();
+    }));
+
+  // ---------- Image upload ----------
+  const status = $("#status");
+  $("#uploadBtn").addEventListener("click", () => $("#file").click());
+  $("#file").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) loadImage(file);
+    e.target.value = "";
+  });
+  function loadImage(file) {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const max = Math.min(2048, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+      const s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(img.width * s));
+      c.height = Math.max(1, Math.round(img.height * s));
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      URL.revokeObjectURL(url);
+      state.texAspect = c.width / c.height;
+      state.hasImage = true;
+      state.source = 3;
+      $("#optImage").disabled = false;
+      status.textContent = "Loaded " + file.name + ". It stays on your device.";
+      syncControls();
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      status.textContent = "That file couldn’t be read as an image. Try a JPG or PNG.";
+    };
+    img.src = url;
+  }
+
+  // ---------- Sync UI ----------
+  function syncVisibility() {
+    document.querySelectorAll('[data-only="binary"]').forEach((el) => el.classList.toggle("hidden", state.model !== 2));
+    document.querySelectorAll("[data-src]").forEach((el) =>
+      el.classList.toggle("hidden", !el.dataset.src.split(" ").includes(String(state.source))));
+  }
+  function updateHint() {
+    $("#hint").textContent = state.drag === "lens"
+      ? "Drag to move the lens. Arrow keys work too."
+      : "Drag to move the background source. Arrow keys work too.";
+  }
+  function updateReadout() {
+    const dx = state.src[0] - state.lens[0], dy = state.src[1] - state.lens[1];
+    const off = Math.hypot(dx, dy) / state.te;
+    const names = ["a point mass", "an isothermal galaxy", "a binary lens"];
+    $("#readout").textContent =
+      "Lensed by " + names[state.model] + ". The source sits " + off.toFixed(2) +
+      " Einstein radii from the lens center" + (off < 0.08 ? ", close to perfect alignment." : ".");
+  }
+  function syncControls() {
+    Object.keys(ranges).forEach((k) => {
+      $("#" + k).value = state[k];
+      $("#" + k + "Out").textContent = ranges[k](state[k]);
+    });
+    $("#m" + state.model).checked = true;
+    (state.drag === "lens" ? $("#dLens") : $("#dSrc")).checked = true;
+    if (state.source === 3 && !state.hasImage) state.source = 0;
+    $("#source").value = String(state.source);
+    $("#crit").checked = state.crit;
+    $("#mag").checked = state.mag;
+    $("#marker").checked = state.marker;
+    syncVisibility();
+    updateHint();
+    updateReadout();
+    requestDraw();
+  }
+
+  syncControls();
+  resize();
+})();
+</script>
+</body>
+</html>
